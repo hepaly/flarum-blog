@@ -15,12 +15,15 @@ class ScopeDiscussionVisibility
     {
         // Hide blogposts which arent published or are still pending approval
         // Writers will have access to the posts if they are still pending for review
-        if(!$actor->hasPermission('blog.canApprovePosts') && !$actor->hasPermission('blog.writeArticles')) {
+        $this->actorid = $actor->id;
+        if( !$actor->hasPermission('blog.canApprovePosts') ) {
             $query->whereNotIn('discussions.id', function ($query) {
                 return $query
-                    ->select('discussion_id')
-                    ->from('blog_meta')
-                    ->where('is_pending_review', 1);
+                    ->select('bm.discussion_id')
+                    ->from('blog_meta as bm')
+                    ->join('discussions as d','d.id', '=', 'bm.discussion_id','inner')
+                    ->where('d.user_id', '!=',  $this->actorid)
+                    ->where('bm.is_pending_review', 1);
             });
         }
     }
